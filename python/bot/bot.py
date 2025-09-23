@@ -5,7 +5,6 @@ from uwapi import *
 from uwapi.interop import *
 from .bot_biomass import on_update_biomass
 from .bot_technocracy import on_update_technocracy
-
 # from python.uwapi import * # this helps with autocomplete in IDE, I use it when editing the file
 
 
@@ -15,6 +14,7 @@ class Bot:
     prototypes = {}
     start_position = None
     race = None
+    game_phase = "early" # can also contain "mid" or "late"
 
     def __init__(self):
         uw_events.on_update(self.on_update)
