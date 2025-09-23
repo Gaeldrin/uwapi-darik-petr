@@ -20,8 +20,10 @@ def build_base(bot):
     # if missing_phytomorph == 2:
     #     bot.build(bot.prototypes["Construction"]["phytomorph"], recipe_id=bot.prototypes["Recipe"]["jumpscare"], max_ghosts=1)
     if missing_phytomorph >= 1:
-        if phytomorph_count % 3 == 0:
+        if phytomorph_count % 4 == 0:
             bot.build(bot.prototypes["Construction"]["phytomorph"], recipe_id=bot.prototypes["Recipe"]["venomite"], max_ghosts=1)
+        elif phytomorph_count % 6 == 4:
+            bot.build(bot.prototypes["Construction"]["phytomorph"], recipe_id=bot.prototypes["Recipe"]["maggot"], max_ghosts=1)
         else:
             bot.build(bot.prototypes["Construction"]["phytomorph"], recipe_id=bot.prototypes["Recipe"]["jumpscare"], max_ghosts=1)
     # if missing_phytomorph == 1:
