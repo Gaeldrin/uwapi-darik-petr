@@ -124,7 +124,7 @@ class Bot:
         own_units = [
             x
             for x in uw_world.entities().values()
-            if x.own() and x.Unit is not None  # and x.proto().data.get("dps", 0) > 0
+            if x.own() and x.Unit is not None and x.proto().data.get("dps", 0) > 0
         ]
         if not own_units:
             return
