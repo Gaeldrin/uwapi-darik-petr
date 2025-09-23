@@ -75,6 +75,18 @@ class Bot:
 
         return None
 
+    def find_drill_id(self, name, id):
+        entities = [
+            x
+            for x in uw_world.entities().values()
+            if x.own() and x.Unit is not None and x.proto().data.get("name") == name
+        ]
+
+        if len(entities) > id:
+            return entities[id].pos()
+
+        return None
+
     def get_constructions_count(self, name):
         entities = [
             x
@@ -88,7 +100,7 @@ class Bot:
         own_units = [
             x
             for x in uw_world.entities().values()
-            if x.own() and x.Unit is not None and x.proto().data.get("dps", 0) > 0
+            if x.own() and x.Unit is not None  # and x.proto().data.get("dps", 0) > 0
         ]
         if not own_units:
             return
@@ -194,24 +206,36 @@ class Bot:
             self.work_step % 10
         ):  # save some cpu cycles by splitting work over multiple steps
             case 1:
-                self.attack_nearest_enemies()
-            case 5:
-                # self.assign_random_recipes()
-                self.build(self.prototypes["Construction"]["drill"])
-            case 6:
-                if self.get_constructions_count("refinery") is not None:
+                if self.get_constructions_count("drill") >= 4:
                     return
-                p = self.find_first_entity("drill")
-                if p is not None:
-                    self.build(self.prototypes["Construction"]["refinery"], 0, p)
+                self.build(self.prototypes["Construction"]["drill"])
+            case 2:
+                if self.get_constructions_count("refinery") >= 1:
+                    return
+                refinery = self.prototypes["Construction"]["refinery"]
+                self.build(refinery, 0, self.find_drill_id("drill", 1))
+            case 3:
+                if (
+                    self.get_constructions_count("refinery") == 0
+                    or self.get_constructions_count("bots factory") >= 4
+                ):
+                    return
+
+                botsFactory = self.prototypes["Construction"]["bots factory"]
+                ytag = self.prototypes["Recipe"]["yatag"]
+                lurker = self.prototypes["Recipe"]["lurker"]
+                juggernaut = self.prototypes["Recipe"]["juggernaut"]
+                self.build(botsFactory, ytag, self.find_drill_id("drill", 1))
+                self.build(botsFactory, ytag, self.find_drill_id("drill", 2))
+                self.build(botsFactory, lurker, self.find_drill_id("drill", 1))
+                self.build(botsFactory, juggernaut, self.find_drill_id("drill", 2))
+            case 9:
+                self.attack_nearest_enemies()
 
     def run(self):
         uw_game.log_info("bot-darik-petr start")
         if not uw_game.try_reconnect():
             uw_game.set_connect_start_gui(True, "--observer 2")
             if not uw_game.connect_environment():
-                if False:
-                    uw_game.connect_new_server(0, "", "--allowUwApiAdmin 1")
-                else:
-                    uw_game.connect_direct("172.16.0.101", 20432)
+                uw_game.connect_new_server(0, "", "--allowUwApiAdmin 1")
         uw_game.log_info("bot-darik-petr done")
