@@ -35,6 +35,7 @@ class Bot:
         recipe_id: int = 0,
         position: int = -1,
         priority: UwPriorityEnum = UwPriorityEnum.Normal,
+        max_ghosts: int = -1,
     ):
         uw_game.log_info(
             "bot-darik-petr build "
@@ -57,10 +58,17 @@ class Bot:
             + str(p)
         )
 
-        # place construction:
-        uw_commands.place_construction(
-            construction_id, p, 0, recipe_id, priority
-        )  # yaw, recipe, and priority are optional
+        ghosts = self.get_construction_count()
+        uw_game.log_info(
+            "bot-darik-petr found ghosts "
+            + str(ghosts)
+        )
+        if max_ghosts == -1 or max_ghosts > ghosts:
+            # place construction:
+            uw_commands.place_construction(
+                construction_id, p, 0, recipe_id, priority
+            )  # yaw, recipe, and priority are optional
+
 
         # # recipe and priority can be changed later:
         # uw_commands.set_recipe(own_id, ANOTHER_RECIPE_ID)
@@ -101,6 +109,15 @@ class Bot:
             return entities[id - 1].pos()
 
         return None
+
+    def get_construction_count(self, name: str = "everything"):
+        entities = [
+            x
+            for x in uw_world.entities().values()
+            if x.own() and x.type() == PrototypeType.Construction and (name == "everything" or x.proto().data.get("name") == name)
+        ]
+
+        return len(entities)
 
     def get_entities_count(self, name):
         entities = [
