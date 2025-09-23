@@ -107,7 +107,8 @@ class Bot:
         uw_game.player_join_force(0)  # create new force
         uw_game.set_force_color(1, 0, 0)
         self.load_prototypes()
-        # uw_game.set_force_race(RACE_ID) # todo
+        uw_game.set_force_race(self.prototypes["Race"]["biomass"]) # todo championship => random selection (I guess)
+        # todo add bot separation by selected force
         if uw_world.is_admin():
             # uw_admin.set_map_selection("planets/tetrahedron.uwmap")
             uw_admin.set_map_selection("special/risk.uwmap")
