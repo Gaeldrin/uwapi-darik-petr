@@ -169,8 +169,8 @@ class Bot:
         # todo add bot separation by selected force
         if uw_world.is_admin():
             # uw_admin.set_map_selection("planets/tetrahedron.uwmap")
-            # uw_admin.set_map_selection("special/disk.uwmap")
-            uw_admin.set_map_selection("special/risk.uwmap")
+            uw_admin.set_map_selection("planets/disk.uwmap")
+            # uw_admin.set_map_selection("special/risk.uwmap")
             uw_admin.add_ai()
             uw_admin.set_automatic_suggested_camera_focus(True)
         uw_game.log_info("configuration done")
@@ -204,7 +204,7 @@ class Bot:
             uw_game.set_connect_start_gui(True, "--observer 2")
             if not uw_game.connect_environment():
                 # automatically select map and start the game from here in the code
-                if False:
+                if True:
                     uw_game.connect_new_server(0, "", "--allowUwApiAdmin 1")
                 else:
                     uw_game.connect_new_server()
