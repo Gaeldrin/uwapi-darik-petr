@@ -145,7 +145,7 @@ class Bot:
         return [
             x
             for x in uw_world.entities().values()
-            if x.own() and x.Unit is not None and x.proto().data.get("dps", 0) > 0
+            if x.own() and x.Unit is not None and x.proto().data.get("dps", 0) > 0.1
         ]
 
     # any enemy counts - units, buildings
@@ -158,6 +158,30 @@ class Bot:
         return [
             x for x in uw_world.entities().values() if x.enemy() and x.Unit is not None and x.movementSpeed < 0.01
         ]
+
+    def go_home(self):
+        own_units = self.get_own_units()
+        for own in own_units:
+            uw_commands.move(own.id, self.start_position)
+
+    def attack_single_nearest_enemy(self):
+        own_units = self.get_own_units()
+        if not own_units:
+            return
+        enemy_units = self.get_enemy_units()
+        if not enemy_units:
+            return
+        closest_enemy = None
+        for own in own_units:
+            if own.proto().id == self.prototypes["Unit"]["overlord"] or own.proto().id == self.prototypes["Unit"]["control core"]:
+                enemy = min(
+                    enemy_units,
+                    key=lambda x: uw_map.distance_estimate(own.pos(), x.pos()),
+                )
+                closest_enemy = enemy
+        for own in own_units:
+            if len(uw_commands.orders(own.id)) == 0:
+                uw_commands.order(own.id, uw_commands.fight_to_entity(closest_enemy.id))
 
     def attack_nearest_enemies(self):
         own_units = self.get_own_units()
