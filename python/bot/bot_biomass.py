@@ -13,13 +13,13 @@ def build_base(bot):
     if missing_tree > 0:
         bot.build(bot.prototypes["Construction"]["nutritree"], position=random.choice(uw_map.area_neighborhood(bot.start_position, 120)), max_ghosts=uw_world.my_force_statistics().logisticsUnitsIdle/2)
 
-    missing_phytomorph = 3 - phytomorph_count
+    missing_phytomorph = (tree_count / 4) - phytomorph_count + 1
     # uw_game.log_info("missing phyts: "+str(missing_phytomorph))
-    if missing_phytomorph == 3:
-        bot.build(bot.prototypes["Construction"]["phytomorph"], recipe_id=bot.prototypes["Recipe"]["jumpscare"], max_ghosts=1)
-    if missing_phytomorph == 2:
-        bot.build(bot.prototypes["Construction"]["phytomorph"], recipe_id=bot.prototypes["Recipe"]["jumpscare"], max_ghosts=1)
-    if missing_phytomorph == 1:
+    # if missing_phytomorph == 3:
+    #     bot.build(bot.prototypes["Construction"]["phytomorph"], recipe_id=bot.prototypes["Recipe"]["jumpscare"], max_ghosts=1)
+    # if missing_phytomorph == 2:
+    #     bot.build(bot.prototypes["Construction"]["phytomorph"], recipe_id=bot.prototypes["Recipe"]["jumpscare"], max_ghosts=1)
+    if missing_phytomorph >= 1:
         bot.build(bot.prototypes["Construction"]["phytomorph"], recipe_id=bot.prototypes["Recipe"]["jumpscare"], max_ghosts=1)
     # if missing_phytomorph == 1:
     #     bot.build(bot.prototypes["Construction"]["phytomorph"], recipe_id=bot.prototypes["Recipe"]["venomite"])
