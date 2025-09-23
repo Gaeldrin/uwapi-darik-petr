@@ -237,5 +237,9 @@ class Bot:
         if not uw_game.try_reconnect():
             uw_game.set_connect_start_gui(True, "--observer 2")
             if not uw_game.connect_environment():
-                uw_game.connect_new_server(0, "", "--allowUwApiAdmin 1")
+                # automatically select map and start the game from here in the code
+                if False:
+                    uw_game.connect_new_server(0, "", "--allowUwApiAdmin 1")
+                else:
+                    uw_game.connect_new_server()
         uw_game.log_info("bot-darik-petr done")
