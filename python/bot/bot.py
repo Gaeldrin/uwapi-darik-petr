@@ -67,15 +67,22 @@ class Bot:
         entities = [
             x
             for x in uw_world.entities().values()
-            if x.own()
-            and x.Unit is not None
-            and x.proto().data.get("name") == name
+            if x.own() and x.Unit is not None and x.proto().data.get("name") == name
         ]
 
         if len(entities) > 0:
             return entities[0].pos()
 
         return None
+
+    def get_constructions_count(self, name):
+        entities = [
+            x
+            for x in uw_world.entities().values()
+            if x.own() and x.Proto is not None and x.proto().data.get("name") == name
+        ]
+
+        return len(entities)
 
     def attack_nearest_enemies(self):
         own_units = [
@@ -192,7 +199,7 @@ class Bot:
                 # self.assign_random_recipes()
                 self.build(self.prototypes["Construction"]["drill"])
             case 6:
-                if self.find_first_entity("refinery") is not None:
+                if self.get_constructions_count("refinery") is not None:
                     return
                 p = self.find_first_entity("drill")
                 if p is not None:
@@ -203,9 +210,8 @@ class Bot:
         if not uw_game.try_reconnect():
             uw_game.set_connect_start_gui(True, "--observer 2")
             if not uw_game.connect_environment():
-                # automatically select map and start the game from here in the code
-                if True:
+                if False:
                     uw_game.connect_new_server(0, "", "--allowUwApiAdmin 1")
                 else:
-                    uw_game.connect_new_server()
+                    uw_game.connect_direct("172.16.0.101", 20432)
         uw_game.log_info("bot-darik-petr done")
