@@ -4,41 +4,68 @@ from uwapi import *
 from uwapi.interop import *
 # from python.uwapi import * # this helps with autocomplete in IDE, I use it when editing the file
 
+ATTACK_UNIT_LIMIT = 26
+MINE_LIMIT = 2
+INCUBATOR_LIMIT = 3
+
 def build_base(bot):
+    if bot.game_phase == "early":
+        build_base_early(bot)
+    elif bot.game_phase == "mid":
+        build_base_mid(bot)
+
+def build_base_early(bot):
     tree_count = bot.get_entities_count("nutritree")
     phytomorph_count = bot.get_entities_count("phytomorph")
     expected_trees = (phytomorph_count + 1) * 4
     missing_tree = expected_trees - tree_count
     # uw_game.log_info("missing trees: "+str(missing_tree))
     if missing_tree > 0:
-        bot.build(bot.prototypes["Construction"]["nutritree"], position=random.choice(uw_map.area_neighborhood(bot.start_position, 120)), max_ghosts=uw_world.my_force_statistics().logisticsUnitsIdle/2)
+        bot.build(bot.prototypes["Construction"]["nutritree"],
+                  position=random.choice(uw_map.area_neighborhood(bot.start_position, 60+(tree_count*5))),
+                  max_ghosts=max(2, uw_world.my_force_statistics().logisticsUnitsIdle/2))
 
     missing_phytomorph = (tree_count / 4) - phytomorph_count + 1
-    # uw_game.log_info("missing phyts: "+str(missing_phytomorph))
-    # if missing_phytomorph == 3:
-    #     bot.build(bot.prototypes["Construction"]["phytomorph"], recipe_id=bot.prototypes["Recipe"]["jumpscare"], max_ghosts=1)
-    # if missing_phytomorph == 2:
-    #     bot.build(bot.prototypes["Construction"]["phytomorph"], recipe_id=bot.prototypes["Recipe"]["jumpscare"], max_ghosts=1)
     if missing_phytomorph >= 1:
-        if phytomorph_count % 4 == 0:
-            bot.build(bot.prototypes["Construction"]["phytomorph"], recipe_id=bot.prototypes["Recipe"]["venomite"], max_ghosts=1)
-        elif phytomorph_count % 6 == 4:
+        if phytomorph_count % 4 == 2:
+            bot.build(bot.prototypes["Construction"]["phytomorph"], recipe_id=bot.prototypes["Recipe"]["venomite"], max_ghosts=2)
+        elif phytomorph_count % 6 == 1:
             bot.build(bot.prototypes["Construction"]["phytomorph"], recipe_id=bot.prototypes["Recipe"]["maggot"], max_ghosts=1)
         else:
-            bot.build(bot.prototypes["Construction"]["phytomorph"], recipe_id=bot.prototypes["Recipe"]["jumpscare"], max_ghosts=1)
-    # if missing_phytomorph == 1:
-    #     bot.build(bot.prototypes["Construction"]["phytomorph"], recipe_id=bot.prototypes["Recipe"]["venomite"])
+            bot.build(bot.prototypes["Construction"]["phytomorph"], recipe_id=bot.prototypes["Recipe"]["jumpscare"])
 
+def build_base_mid(bot):
+    mine_count = bot.get_entities_count("deeproot")
+    if mine_count < 1:
+        bot.build(bot.prototypes["Construction"]["deeproot"], priority=Priority.High)
+    if mine_count < MINE_LIMIT:
+        bot.build(bot.prototypes["Construction"]["deeproot"])
+
+    incubator_count = bot.get_entities_count("incubator")
+    if mine_count > 0 and incubator_count == 0:
+        bot.build(bot.prototypes["Construction"]["incubator"], recipe_id=bot.prototypes["Recipe"]["sunbeam"], priority=Priority.High)
+    if mine_count > 0 and incubator_count < INCUBATOR_LIMIT:
+        bot.build(bot.prototypes["Construction"]["incubator"], recipe_id=bot.prototypes["Recipe"]["sunbeam"])
+
+    build_base_early(bot)
 
 def update_game_phase(bot):
-    pass
+    if bot.game_phase == "early" and bot.get_entities_count("phytomorph") >= 3:
+        bot.game_phase = "mid"
+        bot.rally_point = random.choice(uw_map.area_neighborhood(bot.start_position, 200)),
+    if bot.game_phase != "early" and (bot.get_entities_count("phytomorph") < 3 or bot.get_entities_count("nutritree") < 10):
+        bot.game_phase = "early"
+        bot.rally_point = bot.start_position
 
 
 def consider_attack(bot):
-    if (bot.get_entities_count("jumpscare") > 20):
+    nearest_enemy = bot.get_nearest_enemy()
+
+    if (len(bot.get_own_units()) > ATTACK_UNIT_LIMIT
+            or uw_map.distance_estimate(nearest_enemy.pos(), bot.start_position) < 300) :
         bot.attack_single_nearest_enemy()
     else:
-        bot.go_home()
+        bot.send_units_to(bot.get_own_units(), bot.start_position)
 
 def on_update_biomass(bot):
     bot.find_main_base()
@@ -48,12 +75,13 @@ def on_update_biomass(bot):
     ):  # save some cpu cycles by splitting work over multiple steps
         case 1:
             update_game_phase(bot)
-            if bot.game_phase == "early":
-                build_base(bot)
+        case 2:
+            build_base(bot)
         # case 5:
         #     # self.assign_random_recipes()
         #     bot.build(bot.prototypes["Construction"]["drill"])
         case 6:
+
             consider_attack(bot)
         #     if bot.get_constructions_count("refinery") is not None:
         #         return

@@ -159,10 +159,23 @@ class Bot:
             x for x in uw_world.entities().values() if x.enemy() and x.Unit is not None and x.movementSpeed < 0.01
         ]
 
-    def go_home(self):
-        own_units = self.get_own_units()
+    def get_nearest_enemy(self):
+        enemy_units = self.get_enemy_units()
+        if not enemy_units:
+            return None
+        enemy = min(
+            enemy_units,
+            key=lambda x: uw_map.distance_estimate(x.pos(), self.start_position),
+        )
+
+        return enemy
+
+    def send_units_to(self, own_units: [], position: int):
         for own in own_units:
-            uw_commands.move(own.id, self.start_position)
+            if uw_map.distance_estimate(own.pos(), position) > 200:
+                uw_game.log_info(str(own.id) + " move to " + str(position))
+                uw_commands.order(own.id, uw_commands.run_to_position(position))
+
 
     def attack_single_nearest_enemy(self):
         own_units = self.get_own_units()
@@ -282,7 +295,7 @@ class Bot:
             self.prototypes["Race"][self.race]
         )  # todo championship => random selection (I guess)
 
-        time.sleep(0.4)
+        time.sleep(1)
         if uw_world.is_admin():
             # uw_admin.set_map_selection("planets/tetrahedron.uwmap")
             uw_admin.set_map_selection("planets/disk.uwmap")
