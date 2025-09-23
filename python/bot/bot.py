@@ -1,3 +1,4 @@
+import os
 import random
 import time
 from uwapi import *
@@ -18,23 +19,63 @@ class Bot:
     def find_main_base(self):
         if self.start_position:
             return
-        self.start_position = uw_world.entity(uw_world.my_force_id()).ForceDetails.startingPosition
-        uw_game.log_info("bot-darik-petr found main building at " + str(self.start_position))
+        self.start_position = uw_world.entity(
+            uw_world.my_force_id()
+        ).ForceDetails.startingPosition
+        uw_game.log_info(
+            "bot-darik-petr found main building at " + str(self.start_position)
+        )
 
-    def build(self, construction_id: int, recipe_id: int = 0, priority: UwPriorityEnum = UwPriorityEnum.Normal,):
-        uw_game.log_info("bot-darik-petr build "+str(construction_id)+" with priority "+str(priority))
+    def build(
+        self,
+        construction_id: int,
+        recipe_id: int = 0,
+        position: int = -1,
+        priority: UwPriorityEnum = UwPriorityEnum.Normal,
+    ):
+        uw_game.log_info(
+            "bot-darik-petr build "
+            + str(construction_id)
+            + " with priority "
+            + str(priority)
+        )
         # find closest viable position for miner:
-        p = uw_world.find_construction_placement(construction_id, self.start_position, recipe_id) # recipe id is optional
+        if position < 0:
+            position = self.start_position
+        p = uw_world.find_construction_placement(
+            construction_id, position, recipe_id
+        )  # recipe id is optional
         if p == INVALID:
             return
-        uw_game.log_info("bot-darik-petr found placement for building "+str(construction_id)+" at "+str(p))
+        uw_game.log_info(
+            "bot-darik-petr found placement for building "
+            + str(construction_id)
+            + " at "
+            + str(p)
+        )
 
         # place construction:
-        uw_commands.place_construction(construction_id, p, 0, recipe_id, priority) # yaw, recipe, and priority are optional
+        uw_commands.place_construction(
+            construction_id, p, 0, recipe_id, priority
+        )  # yaw, recipe, and priority are optional
 
         # # recipe and priority can be changed later:
         # uw_commands.set_recipe(own_id, ANOTHER_RECIPE_ID)
         # uw_commands.set_priority(own_id, Priority.Normal)
+
+    def find_first_entity(self, name):
+        entities = [
+            x
+            for x in uw_world.entities().values()
+            if x.own()
+            and x.Unit is not None
+            and x.proto().data.get("name") == name
+        ]
+
+        if len(entities) > 0:
+            return entities[0].pos()
+
+        return None
 
     def attack_nearest_enemies(self):
         own_units = [
@@ -56,7 +97,6 @@ class Bot:
                     key=lambda x: uw_map.distance_estimate(own.pos(), x.pos()),
                 )
                 uw_commands.order(own.id, uw_commands.fight_to_entity(enemy.id))
-
 
     def assign_random_recipes(self):
         for own in uw_world.entities().values():
@@ -84,6 +124,17 @@ class Bot:
                     key, value = line.split(":", 1)
                     self.prototypes[current_section][key.strip()] = int(value.strip())
 
+    def load_race(self):
+        filename = "race.md"
+        race = "biomass"  # default
+        if os.path.exists(filename):
+            with open(filename, "r") as f:
+                race = f.read()
+        else:
+            with open(filename, "w") as f:
+                f.write(race)
+        return race
+
     def configure(self):
         # auto start the game if available
         if (
@@ -107,10 +158,18 @@ class Bot:
         uw_game.player_join_force(0)  # create new force
         uw_game.set_force_color(1, 0, 0)
         self.load_prototypes()
-        uw_game.set_force_race(self.prototypes["Race"]["biomass"]) # todo championship => random selection (I guess)
+
+        # choose race
+        race = self.load_race()
+        uw_game.log_info(f"Loaded race: \033[93m{race}\033[0m")
+        uw_game.set_force_race(
+            self.prototypes["Race"][race]
+        )  # todo championship => random selection (I guess)
+
         # todo add bot separation by selected force
         if uw_world.is_admin():
             # uw_admin.set_map_selection("planets/tetrahedron.uwmap")
+            # uw_admin.set_map_selection("special/disk.uwmap")
             uw_admin.set_map_selection("special/risk.uwmap")
             uw_admin.add_ai()
             uw_admin.set_automatic_suggested_camera_focus(True)
@@ -124,12 +183,20 @@ class Bot:
 
         self.find_main_base()
 
-        match self.work_step % 10:  # save some cpu cycles by splitting work over multiple steps
+        match (
+            self.work_step % 10
+        ):  # save some cpu cycles by splitting work over multiple steps
             case 1:
                 self.attack_nearest_enemies()
             case 5:
                 # self.assign_random_recipes()
                 self.build(self.prototypes["Construction"]["drill"])
+            case 6:
+                if self.find_first_entity("refinery") is not None:
+                    return
+                p = self.find_first_entity("drill")
+                if p is not None:
+                    self.build(self.prototypes["Construction"]["refinery"], 0, p)
 
     def run(self):
         uw_game.log_info("bot-darik-petr start")
