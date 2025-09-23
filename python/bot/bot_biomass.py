@@ -5,9 +5,9 @@ from uwapi.interop import *
 # from python.uwapi import * # this helps with autocomplete in IDE, I use it when editing the file
 
 def build_base(bot):
-    phytomorph_count = bot.get_constructions_count("phytomorph")
+    phytomorph_count = bot.get_entities_count("phytomorph")
     expected_trees = (phytomorph_count + 1) * 4
-    missing_tree = expected_trees - bot.get_constructions_count("nutritree")
+    missing_tree = expected_trees - bot.get_entities_count("nutritree")
     # uw_game.log_info("missing trees: "+str(missing_tree))
     if missing_tree > 0:
         bot.build(bot.prototypes["Construction"]["nutritree"], position=random.choice(uw_map.area_neighborhood(bot.start_position, 120)))
@@ -29,7 +29,7 @@ def update_game_phase(bot):
 
 
 def consider_attack(bot):
-    if (bot.get_constructions_count("jumpscare") > 20):
+    if (bot.get_entities_count("jumpscare") > 20):
         bot.attack_nearest_enemies()
 
 

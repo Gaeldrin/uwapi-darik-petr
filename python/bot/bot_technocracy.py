@@ -8,11 +8,11 @@ def on_update_technocracy(bot):
         bot.work_step % 10
     ):  # save some cpu cycles by splitting work over multiple steps
         case 1:
-            if bot.get_constructions_count("drill") >= 4:
+            if bot.get_entities_count("drill") >= 4:
                 return
             bot.build(bot.prototypes["Construction"]["drill"])
         case 2:
-            if bot.get_constructions_count("refinery") >= 1:
+            if bot.get_entities_count("refinery") >= 1:
                 return
             refinery = bot.prototypes["Construction"]["refinery"]
             p = bot.find_recipe_id(bot.prototypes["Recipe"]["oil"], 1)
@@ -22,7 +22,7 @@ def on_update_technocracy(bot):
             if (
                 bot.get_units_count("drill") < 4
                 or bot.get_units_count("refinery") < 1
-                or bot.get_constructions_count("bots factory") >= 4
+                or bot.get_entities_count("bots factory") >= 4
             ):
                 return
             botsFactory = bot.prototypes["Construction"]["bots factory"]

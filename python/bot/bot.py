@@ -102,7 +102,7 @@ class Bot:
 
         return None
 
-    def get_constructions_count(self, name):
+    def get_entities_count(self, name):
         entities = [
             x
             for x in uw_world.entities().values()
