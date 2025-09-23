@@ -27,12 +27,13 @@ def on_update_technocracy(bot):
                 return
             botsFactory = bot.prototypes["Construction"]["bots factory"]
             ytag = bot.prototypes["Recipe"]["yatag"]
-            lurker = bot.prototypes["Recipe"]["lurker"]
-            juggernaut = bot.prototypes["Recipe"]["juggernaut"]
+            lurker = 2480574658
+            juggernaut = 3277593549
             metal = 3161943147
             bot.build(botsFactory, ytag, bot.find_recipe_id(metal, 1))
             bot.build(botsFactory, ytag, bot.find_recipe_id(metal, 2))
             bot.build(botsFactory, lurker, bot.find_recipe_id(metal, 1))
             bot.build(botsFactory, juggernaut, bot.find_recipe_id(metal, 2))
         case 9:
-            bot.attack_nearest_enemies()
+            if (bot.get_entities_count("yatag") > 10):
+                bot.attack_nearest_building()

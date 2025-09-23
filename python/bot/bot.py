@@ -14,7 +14,7 @@ class Bot:
     prototypes = {}
     start_position = None
     race = None
-    game_phase = "early" # can also contain "mid" or "late"
+    game_phase = "early"  # can also contain "mid" or "late"
 
     def __init__(self):
         uw_events.on_update(self.on_update)
@@ -90,14 +90,18 @@ class Bot:
         entities = [
             x
             for x in uw_world.entities().values()
-            if x.own() and x.Unit is not None and x.Recipe is not None and x.proto().data.get("name") == "drill" and x.Recipe.recipe == recipeId
+            if x.own()
+            and x.Unit is not None
+            and x.Recipe is not None
+            and x.proto().data.get("name") == "drill"
+            and x.Recipe.recipe == recipeId
         ]
 
         if len(entities) >= id:
             return entities[id - 1].pos()
 
         return None
-    
+
     def find_drill_id(self, name, id):
         entities = [
             x
@@ -137,17 +141,44 @@ class Bot:
 
         return len(entities)
 
-    def attack_nearest_enemies(self):
-        own_units = [
+    def get_own_units(self):
+        return [
             x
             for x in uw_world.entities().values()
             if x.own() and x.Unit is not None and x.proto().data.get("dps", 0) > 0
         ]
-        if not own_units:
-            return
-        enemy_units = [
+
+    # any enemy counts - units, buildings
+    def get_enemy_units(self):
+        return [
             x for x in uw_world.entities().values() if x.enemy() and x.Unit is not None
         ]
+    
+    def get_enemy_buildings(self):
+        return [
+            x for x in uw_world.entities().values() if x.enemy() and x.Unit is not None and x.movementSpeed < 0.01
+        ]
+
+    def attack_nearest_enemies(self):
+        own_units = self.get_own_units()
+        if not own_units:
+            return
+        enemy_units = self.get_enemy_units()
+        if not enemy_units:
+            return
+        for own in own_units:
+            if len(uw_commands.orders(own.id)) == 0:
+                enemy = min(
+                    enemy_units,
+                    key=lambda x: uw_map.distance_estimate(own.pos(), x.pos()),
+                )
+                uw_commands.order(own.id, uw_commands.fight_to_entity(enemy.id))
+
+    def attack_nearest_building(self):
+        own_units = self.get_own_units()
+        if not own_units:
+            return
+        enemy_units = self.get_enemy_buildings()
         if not enemy_units:
             return
         for own in own_units:
@@ -242,7 +273,7 @@ class Bot:
             return
         self.work_step += 1
 
-        if (self.race == "biomass"):
+        if self.race == "biomass":
             on_update_biomass(self)
         else:
             on_update_technocracy(self)
