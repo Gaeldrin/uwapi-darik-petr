@@ -20,7 +20,10 @@ def build_base(bot):
     # if missing_phytomorph == 2:
     #     bot.build(bot.prototypes["Construction"]["phytomorph"], recipe_id=bot.prototypes["Recipe"]["jumpscare"], max_ghosts=1)
     if missing_phytomorph >= 1:
-        bot.build(bot.prototypes["Construction"]["phytomorph"], recipe_id=bot.prototypes["Recipe"]["jumpscare"], max_ghosts=1)
+        if phytomorph_count % 3 == 0:
+            bot.build(bot.prototypes["Construction"]["phytomorph"], recipe_id=bot.prototypes["Recipe"]["venomite"], max_ghosts=1)
+        else:
+            bot.build(bot.prototypes["Construction"]["phytomorph"], recipe_id=bot.prototypes["Recipe"]["jumpscare"], max_ghosts=1)
     # if missing_phytomorph == 1:
     #     bot.build(bot.prototypes["Construction"]["phytomorph"], recipe_id=bot.prototypes["Recipe"]["venomite"])
 
@@ -31,8 +34,9 @@ def update_game_phase(bot):
 
 def consider_attack(bot):
     if (bot.get_entities_count("jumpscare") > 20):
-        bot.attack_nearest_enemies()
-
+        bot.attack_single_nearest_enemy()
+    else:
+        bot.go_home()
 
 def on_update_biomass(bot):
     bot.find_main_base()
