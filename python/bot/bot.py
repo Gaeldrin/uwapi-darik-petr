@@ -215,6 +215,7 @@ class Bot:
         self.is_configured = True
         uw_game.log_info("configuration start")
         uw_game.set_player_name("bot-darik-petr")
+        time.sleep(0.4)
         uw_game.player_join_force(0)  # create new force
         uw_game.set_force_color(1, 0, 0)
         self.load_prototypes()
@@ -226,6 +227,7 @@ class Bot:
             self.prototypes["Race"][self.race]
         )  # todo championship => random selection (I guess)
 
+        time.sleep(0.4)
         if uw_world.is_admin():
             # uw_admin.set_map_selection("planets/tetrahedron.uwmap")
             uw_admin.set_map_selection("planets/disk.uwmap")
