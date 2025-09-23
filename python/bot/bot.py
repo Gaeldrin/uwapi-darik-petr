@@ -78,6 +78,18 @@ class Bot:
 
         return None
 
+    def find_recipe_id(self, recipeId, id):
+        entities = [
+            x
+            for x in uw_world.entities().values()
+            if x.own() and x.Unit is not None and x.Recipe is not None and x.proto().data.get("name") == "drill" and x.Recipe.recipe == recipeId
+        ]
+
+        if len(entities) >= id:
+            return entities[id - 1].pos()
+
+        return None
+    
     def find_drill_id(self, name, id):
         entities = [
             x
@@ -85,8 +97,8 @@ class Bot:
             if x.own() and x.Unit is not None and x.proto().data.get("name") == name
         ]
 
-        if len(entities) > id:
-            return entities[id].pos()
+        if len(entities) >= id:
+            return entities[id - 1].pos()
 
         return None
 
@@ -95,6 +107,15 @@ class Bot:
             x
             for x in uw_world.entities().values()
             if x.own() and x.Proto is not None and x.proto().data.get("name") == name
+        ]
+
+        return len(entities)
+
+    def get_units_count(self, name):
+        entities = [
+            x
+            for x in uw_world.entities().values()
+            if x.own() and x.Unit is not None and x.proto().data.get("name") == name
         ]
 
         return len(entities)
@@ -213,7 +234,7 @@ class Bot:
             uw_game.set_connect_start_gui(True, "--observer 2")
             if not uw_game.connect_environment():
                 # automatically select map and start the game from here in the code
-                if False:
+                if True:
                     uw_game.connect_new_server(0, "", "--allowUwApiAdmin 1")
                 else:
                     uw_game.connect_new_server()
