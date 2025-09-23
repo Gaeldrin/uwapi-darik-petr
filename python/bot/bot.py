@@ -3,6 +3,8 @@ import random
 import time
 from uwapi import *
 from uwapi.interop import *
+from .bot_biomass import on_update_biomass
+from .bot_technocracy import on_update_technocracy
 
 # from python.uwapi import * # this helps with autocomplete in IDE, I use it when editing the file
 
@@ -12,6 +14,7 @@ class Bot:
     work_step: int = 0  # save some cpu cycles by splitting work over multiple steps
     prototypes = {}
     start_position = None
+    race = None
 
     def __init__(self):
         uw_events.on_update(self.on_update)
@@ -179,13 +182,12 @@ class Bot:
         self.load_prototypes()
 
         # choose race
-        race = self.load_race()
-        uw_game.log_info(f"Loaded race: \033[93m{race}\033[0m")
+        self.race = self.load_race()
+        uw_game.log_info(f"Loaded race: \033[93m{self.race}\033[0m")
         uw_game.set_force_race(
-            self.prototypes["Race"][race]
+            self.prototypes["Race"][self.race]
         )  # todo championship => random selection (I guess)
 
-        # todo add bot separation by selected force
         if uw_world.is_admin():
             # uw_admin.set_map_selection("planets/tetrahedron.uwmap")
             uw_admin.set_map_selection("planets/disk.uwmap")
@@ -200,37 +202,10 @@ class Bot:
             return
         self.work_step += 1
 
-        self.find_main_base()
-
-        match (
-            self.work_step % 10
-        ):  # save some cpu cycles by splitting work over multiple steps
-            case 1:
-                if self.get_constructions_count("drill") >= 4:
-                    return
-                self.build(self.prototypes["Construction"]["drill"])
-            case 2:
-                if self.get_constructions_count("refinery") >= 1:
-                    return
-                refinery = self.prototypes["Construction"]["refinery"]
-                self.build(refinery, 0, self.find_drill_id("drill", 1))
-            case 3:
-                if (
-                    self.get_constructions_count("refinery") == 0
-                    or self.get_constructions_count("bots factory") >= 4
-                ):
-                    return
-
-                botsFactory = self.prototypes["Construction"]["bots factory"]
-                ytag = self.prototypes["Recipe"]["yatag"]
-                lurker = self.prototypes["Recipe"]["lurker"]
-                juggernaut = self.prototypes["Recipe"]["juggernaut"]
-                self.build(botsFactory, ytag, self.find_drill_id("drill", 1))
-                self.build(botsFactory, ytag, self.find_drill_id("drill", 2))
-                self.build(botsFactory, lurker, self.find_drill_id("drill", 1))
-                self.build(botsFactory, juggernaut, self.find_drill_id("drill", 2))
-            case 9:
-                self.attack_nearest_enemies()
+        if (self.race == "biomass"):
+            on_update_biomass(self)
+        else:
+            on_update_technocracy(self)
 
     def run(self):
         uw_game.log_info("bot-darik-petr start")
