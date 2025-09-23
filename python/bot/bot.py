@@ -59,16 +59,12 @@ class Bot:
         )
 
         ghosts = self.get_construction_count()
-        uw_game.log_info(
-            "bot-darik-petr found ghosts "
-            + str(ghosts)
-        )
+        uw_game.log_info("bot-darik-petr found ghosts " + str(ghosts))
         if max_ghosts == -1 or max_ghosts > ghosts:
             # place construction:
             uw_commands.place_construction(
                 construction_id, p, 0, recipe_id, priority
             )  # yaw, recipe, and priority are optional
-
 
         # # recipe and priority can be changed later:
         # uw_commands.set_recipe(own_id, ANOTHER_RECIPE_ID)
@@ -118,7 +114,9 @@ class Bot:
         entities = [
             x
             for x in uw_world.entities().values()
-            if x.own() and x.type() == PrototypeType.Construction and (name == "everything" or x.proto().data.get("name") == name)
+            if x.own()
+            and x.type() == PrototypeType.Construction
+            and (name == "everything" or x.proto().data.get("name") == name)
         ]
 
         return len(entities)
@@ -153,10 +151,14 @@ class Bot:
         return [
             x for x in uw_world.entities().values() if x.enemy() and x.Unit is not None
         ]
-    
+
     def get_enemy_buildings(self):
         return [
-            x for x in uw_world.entities().values() if x.enemy() and x.Unit is not None and x.movementSpeed < 0.01
+            x
+            for x in uw_world.entities().values()
+            if x.enemy()
+            and x.Unit is not None
+            and x.proto().data.get("movementSpeed", 0) < 0.01
         ]
 
     def attack_nearest_enemies(self):

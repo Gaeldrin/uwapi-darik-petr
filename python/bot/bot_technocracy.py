@@ -22,18 +22,37 @@ def on_update_technocracy(bot):
             if (
                 bot.get_units_count("drill") < 4
                 or bot.get_units_count("refinery") < 1
-                or bot.get_entities_count("bots factory") >= 4
+                or bot.get_entities_count("bots factory") >= 2
             ):
                 return
             botsFactory = bot.prototypes["Construction"]["bots factory"]
             ytag = bot.prototypes["Recipe"]["yatag"]
-            lurker = 2480574658
-            juggernaut = 3277593549
             metal = 3161943147
             bot.build(botsFactory, ytag, bot.find_recipe_id(metal, 1))
             bot.build(botsFactory, ytag, bot.find_recipe_id(metal, 2))
+        case 4:
+            if (
+                bot.get_units_count("drill") < 4
+                or bot.get_units_count("refinery") < 1
+                or bot.get_entities_count("bots factory") >= 3
+            ):
+                return
+            botsFactory = bot.prototypes["Construction"]["bots factory"]
+            lurker = 2480574658
+            juggernaut = 3277593549
+            metal = 3161943147
             bot.build(botsFactory, lurker, bot.find_recipe_id(metal, 1))
+        case 5:
+            if (
+                bot.get_units_count("drill") < 4
+                or bot.get_units_count("refinery") < 1
+                or bot.get_entities_count("bots factory") >= 4
+            ):
+                return
+            botsFactory = bot.prototypes["Construction"]["bots factory"]
+            juggernaut = 3277593549
+            metal = 3161943147
             bot.build(botsFactory, juggernaut, bot.find_recipe_id(metal, 2))
         case 9:
-            if (bot.get_entities_count("yatag") > 10):
+            if (bot.get_entities_count("yatag") > 5):
                 bot.attack_nearest_building()
