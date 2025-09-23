@@ -1,14 +1,40 @@
 import random
 import time
 from uwapi import *
+from uwapi.interop import *
+
+# from python.uwapi import * # this helps with autocomplete in IDE, I use it when editing the file
 
 
 class Bot:
     is_configured: bool = False
     work_step: int = 0  # save some cpu cycles by splitting work over multiple steps
+    prototypes = {}
+    start_position = None
 
     def __init__(self):
         uw_events.on_update(self.on_update)
+
+    def find_main_base(self):
+        if self.start_position:
+            return
+        self.start_position = uw_world.entity(uw_world.my_force_id()).ForceDetails.startingPosition
+        uw_game.log_info("bot-darik-petr found main building at " + str(self.start_position))
+
+    def build(self, construction_id: int, recipe_id: int = 0, priority: UwPriorityEnum = UwPriorityEnum.Normal,):
+        uw_game.log_info("bot-darik-petr build "+str(construction_id)+" with priority "+str(priority))
+        # find closest viable position for miner:
+        p = uw_world.find_construction_placement(construction_id, self.start_position, recipe_id) # recipe id is optional
+        if p == INVALID:
+            return
+        uw_game.log_info("bot-darik-petr found placement for building "+str(construction_id)+" at "+str(p))
+
+        # place construction:
+        uw_commands.place_construction(construction_id, p, 0, recipe_id, priority) # yaw, recipe, and priority are optional
+
+        # # recipe and priority can be changed later:
+        # uw_commands.set_recipe(own_id, ANOTHER_RECIPE_ID)
+        # uw_commands.set_priority(own_id, Priority.Normal)
 
     def attack_nearest_enemies(self):
         own_units = [
@@ -31,14 +57,32 @@ class Bot:
                 )
                 uw_commands.order(own.id, uw_commands.fight_to_entity(enemy.id))
 
+
     def assign_random_recipes(self):
         for own in uw_world.entities().values():
             if not own.own() or own.Unit is None or own.Recipe is not None:
                 continue
+            # recipes = self.prototypes["Recipe"]["ATV"] # Worker recipe
             recipes = own.proto().data.get("recipes", [])
             if recipes:
                 recipe = random.choice(recipes)
                 uw_commands.set_recipe(own.id, recipe)
+
+    # Requires prototypes.md generated via prototypes.py script
+    def load_prototypes(self):
+        current_section = None
+
+        with open("prototypes.md", "r") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                if line.startswith("##"):  # new section header
+                    current_section = line.lstrip("#").strip()
+                    self.prototypes[current_section] = {}
+                elif ":" in line and current_section is not None:
+                    key, value = line.split(":", 1)
+                    self.prototypes[current_section][key.strip()] = int(value.strip())
 
     def configure(self):
         # auto start the game if available
@@ -59,9 +103,10 @@ class Bot:
             return
         self.is_configured = True
         uw_game.log_info("configuration start")
-        uw_game.set_player_name("bot-py")
+        uw_game.set_player_name("bot-darik-petr")
         uw_game.player_join_force(0)  # create new force
         uw_game.set_force_color(1, 0, 0)
+        self.load_prototypes()
         # uw_game.set_force_race(RACE_ID) # todo
         if uw_world.is_admin():
             # uw_admin.set_map_selection("planets/tetrahedron.uwmap")
@@ -75,14 +120,18 @@ class Bot:
         if not stepping:
             return
         self.work_step += 1
+
+        self.find_main_base()
+
         match self.work_step % 10:  # save some cpu cycles by splitting work over multiple steps
             case 1:
                 self.attack_nearest_enemies()
             case 5:
-                self.assign_random_recipes()
+                # self.assign_random_recipes()
+                self.build(self.prototypes["Construction"]["drill"])
 
     def run(self):
-        uw_game.log_info("bot-py start")
+        uw_game.log_info("bot-darik-petr start")
         if not uw_game.try_reconnect():
             uw_game.set_connect_start_gui(True, "--observer 2")
             if not uw_game.connect_environment():
@@ -91,4 +140,4 @@ class Bot:
                     uw_game.connect_new_server(0, "", "--allowUwApiAdmin 1")
                 else:
                     uw_game.connect_new_server()
-        uw_game.log_info("bot-py done")
+        uw_game.log_info("bot-darik-petr done")
