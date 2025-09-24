@@ -110,7 +110,7 @@ class Bot:
 
         return None
 
-    def get_construction_count(self, name: str = "everything"):
+    def get_constructions(self, name: str = "everything"):
         entities = [
             x
             for x in uw_world.entities().values()
@@ -118,8 +118,10 @@ class Bot:
             and x.type() == PrototypeType.Construction
             and (name == "everything" or x.proto().data.get("name") == name)
         ]
+        return entities
 
-        return len(entities)
+    def get_construction_count(self, name: str = "everything"):
+        return len(self.get_constructions(name))
 
     def get_entities_count(self, name):
         entities = [
@@ -143,7 +145,7 @@ class Bot:
         return [
             x
             for x in uw_world.entities().values()
-            if x.own() and x.Unit is not None and x.proto().data.get("dps", 0) > 0
+            if x.own() and x.Unit is not None and x.proto().data.get("dps", 0) > 0.1
         ]
 
     # any enemy counts - units, buildings
@@ -160,6 +162,43 @@ class Bot:
             and x.Unit is not None
             and x.proto().data.get("movementSpeed", 0) < 0.01
         ]
+
+    def get_nearest_enemy(self):
+        enemy_units = self.get_enemy_units()
+        if not enemy_units:
+            return None
+        enemy = min(
+            enemy_units,
+            key=lambda x: uw_map.distance_estimate(x.pos(), self.start_position),
+        )
+
+        return enemy
+
+    def send_units_to(self, own_units: [], position: int):
+        for own in own_units:
+            if uw_map.distance_estimate(own.pos(), position) > 200:
+                uw_game.log_info(str(own.id) + " move to " + str(position))
+                uw_commands.order(own.id, uw_commands.run_to_position(position))
+
+
+    def attack_single_nearest_enemy(self):
+        own_units = self.get_own_units()
+        if not own_units:
+            return
+        enemy_units = self.get_enemy_units()
+        if not enemy_units:
+            return
+        closest_enemy = None
+        for own in own_units:
+            if own.proto().id == self.prototypes["Unit"]["overlord"] or own.proto().id == self.prototypes["Unit"]["control core"]:
+                enemy = min(
+                    enemy_units,
+                    key=lambda x: uw_map.distance_estimate(own.pos(), x.pos()),
+                )
+                closest_enemy = enemy
+        for own in own_units:
+            if len(uw_commands.orders(own.id)) == 0:
+                uw_commands.order(own.id, uw_commands.fight_to_entity(closest_enemy.id))
 
     def attack_nearest_enemies(self):
         own_units = self.get_own_units()
@@ -260,7 +299,7 @@ class Bot:
             self.prototypes["Race"][self.race]
         )  # todo championship => random selection (I guess)
 
-        time.sleep(0.4)
+        time.sleep(1)
         if uw_world.is_admin():
             # uw_admin.set_map_selection("planets/tetrahedron.uwmap")
             uw_admin.set_map_selection("planets/disk.uwmap")
