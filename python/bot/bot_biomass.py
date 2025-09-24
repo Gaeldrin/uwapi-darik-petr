@@ -10,6 +10,7 @@ INCUBATOR_LIMIT = 3
 DEFENSE_PERIMETER = 300
 
 def build_base(bot):
+    consider_repair(bot)
     if bot.game_phase == "early":
         build_base_early(bot)
     elif bot.game_phase == "mid":
@@ -60,6 +61,15 @@ def update_game_phase(bot):
         bot.game_phase = "early"
         bot.rally_point = bot.start_position
 
+def consider_repair(bot):
+    for own in bot.get_constructions("nutritree"):
+        # uw_commands.order(own.id, uw_commands.self_destruct(own.id))
+        if own.Priority.priority == Priority.Disabled:
+            uw_commands.self_destruct(own.id)
+    nearest_enemy = bot.get_nearest_enemy()
+    if uw_map.distance_estimate(nearest_enemy.pos(), bot.start_position) > DEFENSE_PERIMETER + 50:
+        for own in bot.get_constructions():
+            uw_commands.set_priority(own.id, Priority.Normal)
 
 def consider_attack(bot):
     nearest_enemy = bot.get_nearest_enemy()
