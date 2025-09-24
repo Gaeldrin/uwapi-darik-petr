@@ -70,6 +70,16 @@ class Bot:
         # uw_commands.set_recipe(own_id, ANOTHER_RECIPE_ID)
         # uw_commands.set_priority(own_id, Priority.Normal)
 
+    def set_normal_priority_to_all(self):
+        entities = [
+            x
+            for x in uw_world.entities().values()
+            if x.own() and x.Unit is not None and x.proto().data.get("dps", 0) < 0.1
+        ]
+
+        for i in entities:
+            uw_commands.set_priority(i.id, Priority.Normal)
+
     def find_first_entity(self, name):
         entities = [
             x
@@ -109,6 +119,15 @@ class Bot:
             return entities[id - 1].pos()
 
         return None
+
+    def find_random_building(self):
+        entities = [
+            x
+            for x in uw_world.entities().values()
+            if x.own() and x.Unit is not None and x.proto().data.get("dps", 0) < 0.1
+        ]
+
+        return random.choice(entities).pos()
 
     def get_constructions(self, name: str = "everything"):
         entities = [
@@ -232,6 +251,22 @@ class Bot:
                 )
                 if uw_map.distance_estimate(own.pos(), enemy.pos()) < distance:
                     uw_commands.order(own.id, uw_commands.fight_to_entity(enemy.id))
+
+    def go_to_random_building(self):
+        own_units = self.get_own_units()
+        if not own_units:
+            return
+
+        buildings = [
+            x
+            for x in uw_world.entities().values()
+            if x.own() and x.Unit is not None and x.proto().data.get("dps", 0) < 0.1
+        ]
+
+        for own in own_units:
+            if len(uw_commands.orders(own.id)) == 0:
+                target = random.choice(buildings).id
+                uw_commands.order(own.id, uw_commands.fight_to_entity(target))
 
     def attack_nearest_building(self):
         own_units = self.get_own_units()
