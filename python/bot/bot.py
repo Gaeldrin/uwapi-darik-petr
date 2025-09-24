@@ -180,7 +180,6 @@ class Bot:
                 uw_game.log_info(str(own.id) + " move to " + str(position))
                 uw_commands.order(own.id, uw_commands.run_to_position(position))
 
-
     def attack_single_nearest_enemy(self):
         own_units = self.get_own_units()
         if not own_units:
@@ -190,7 +189,10 @@ class Bot:
             return
         closest_enemy = None
         for own in own_units:
-            if own.proto().id == self.prototypes["Unit"]["overlord"] or own.proto().id == self.prototypes["Unit"]["control core"]:
+            if (
+                own.proto().id == self.prototypes["Unit"]["overlord"]
+                or own.proto().id == self.prototypes["Unit"]["control core"]
+            ):
                 enemy = min(
                     enemy_units,
                     key=lambda x: uw_map.distance_estimate(own.pos(), x.pos()),
@@ -214,6 +216,22 @@ class Bot:
                     key=lambda x: uw_map.distance_estimate(own.pos(), x.pos()),
                 )
                 uw_commands.order(own.id, uw_commands.fight_to_entity(enemy.id))
+
+    def attack_close_enemies(self, distance):
+        own_units = self.get_own_units()
+        if not own_units:
+            return
+        enemy_units = self.get_enemy_units()
+        if not enemy_units:
+            return
+        for own in own_units:
+            if len(uw_commands.orders(own.id)) == 0:
+                enemy = min(
+                    enemy_units,
+                    key=lambda x: uw_map.distance_estimate(own.pos(), x.pos()),
+                )
+                if uw_map.distance_estimate(own.pos(), enemy.pos()) < distance:
+                    uw_commands.order(own.id, uw_commands.fight_to_entity(enemy.id))
 
     def attack_nearest_building(self):
         own_units = self.get_own_units()
