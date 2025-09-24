@@ -7,6 +7,7 @@ from uwapi.interop import *
 ATTACK_UNIT_LIMIT = 26
 MINE_LIMIT = 2
 INCUBATOR_LIMIT = 3
+DEFENSE_PERIMETER = 300
 
 def build_base(bot):
     if bot.game_phase == "early":
@@ -27,12 +28,14 @@ def build_base_early(bot):
 
     missing_phytomorph = (tree_count / 4) - phytomorph_count + 1
     if missing_phytomorph >= 1:
-        if phytomorph_count % 4 == 2:
-            bot.build(bot.prototypes["Construction"]["phytomorph"], recipe_id=bot.prototypes["Recipe"]["venomite"], max_ghosts=2)
-        elif phytomorph_count % 6 == 1:
-            bot.build(bot.prototypes["Construction"]["phytomorph"], recipe_id=bot.prototypes["Recipe"]["maggot"], max_ghosts=1)
-        else:
+        if phytomorph_count == 0:
             bot.build(bot.prototypes["Construction"]["phytomorph"], recipe_id=bot.prototypes["Recipe"]["jumpscare"])
+        elif phytomorph_count == 1:
+            bot.build(bot.prototypes["Construction"]["phytomorph"], recipe_id=bot.prototypes["Recipe"]["maggot"])
+        # elif phytomorph_count % 3 == 2:
+        #     bot.build(bot.prototypes["Construction"]["phytomorph"], recipe_id=bot.prototypes["Recipe"]["venomite"])
+        else:
+            bot.build(bot.prototypes["Construction"]["phytomorph"], recipe_id=bot.prototypes["Recipe"]["venomite"], max_ghosts=3)
 
 def build_base_mid(bot):
     mine_count = bot.get_entities_count("deeproot")
@@ -44,8 +47,8 @@ def build_base_mid(bot):
     incubator_count = bot.get_entities_count("incubator")
     if mine_count > 0 and incubator_count == 0:
         bot.build(bot.prototypes["Construction"]["incubator"], recipe_id=bot.prototypes["Recipe"]["sunbeam"], priority=Priority.High)
-    if mine_count > 0 and incubator_count < INCUBATOR_LIMIT:
-        bot.build(bot.prototypes["Construction"]["incubator"], recipe_id=bot.prototypes["Recipe"]["sunbeam"])
+    if mine_count > 1 and incubator_count < INCUBATOR_LIMIT:
+        bot.build(bot.prototypes["Construction"]["incubator"], recipe_id=bot.prototypes["Recipe"]["rhino"], priority=Priority.High)
 
     build_base_early(bot)
 
@@ -60,9 +63,8 @@ def update_game_phase(bot):
 
 def consider_attack(bot):
     nearest_enemy = bot.get_nearest_enemy()
-
     if (len(bot.get_own_units()) > ATTACK_UNIT_LIMIT
-            or uw_map.distance_estimate(nearest_enemy.pos(), bot.start_position) < 300) :
+            or uw_map.distance_estimate(nearest_enemy.pos(), bot.start_position) < DEFENSE_PERIMETER) :
         bot.attack_single_nearest_enemy()
     else:
         bot.send_units_to(bot.get_own_units(), bot.start_position)
@@ -81,7 +83,6 @@ def on_update_biomass(bot):
         #     # self.assign_random_recipes()
         #     bot.build(bot.prototypes["Construction"]["drill"])
         case 6:
-
             consider_attack(bot)
         #     if bot.get_constructions_count("refinery") is not None:
         #         return
