@@ -114,14 +114,16 @@ class Bot:
 
         return None
 
-    def get_construction_count(self, name: str = "everything"):
+    def get_constructions(self, name: str = "everything"):
         entities = [
             x
             for x in uw_world.entities().values()
             if x.own() and x.type() == PrototypeType.Construction and (name == "everything" or x.proto().data.get("name") == name)
         ]
+        return entities
 
-        return len(entities)
+    def get_construction_count(self, name: str = "everything"):
+        return len(self.get_constructions(name))
 
     def get_entities_count(self, name):
         entities = [
