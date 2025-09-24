@@ -22,7 +22,7 @@ def on_update_technocracy(bot):
             if (
                 bot.get_units_count("drill") < 4
                 or bot.get_units_count("refinery") < 1
-                or bot.get_entities_count("bots factory") >= 4
+                or bot.get_entities_count("bots factory") >= 2
             ):
                 return
             botsFactory = bot.prototypes["Construction"]["bots factory"]
@@ -31,5 +31,5 @@ def on_update_technocracy(bot):
             bot.build(botsFactory, tripod, bot.find_recipe_id(metal, 1))
             bot.build(botsFactory, tripod, bot.find_recipe_id(metal, 2))
         case 9:
-            if (bot.get_entities_count("tripod") > 30):
+            if (bot.get_entities_count("tripod") > 10):
                 bot.attack_nearest_enemies()
