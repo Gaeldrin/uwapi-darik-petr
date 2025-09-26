@@ -103,7 +103,7 @@ class Bot:
             and x.Recipe.recipe == recipeId
         ]
 
-        if len(entities) >= id:
+        if len(entities) >= id and len(entities) > 0:
             return entities[id - 1].pos()
 
         return None
@@ -147,6 +147,18 @@ class Bot:
             x
             for x in uw_world.entities().values()
             if x.own() and x.Proto is not None and x.proto().data.get("name") == name
+        ]
+
+        return len(entities)
+
+    def get_done_entities_count(self, name):
+        entities = [
+            x
+            for x in uw_world.entities().values()
+            if x.own()
+            and x.Proto is not None
+            and x.type() == PrototypeType.Unit
+            and x.proto().data.get("name") == name
         ]
 
         return len(entities)
@@ -355,9 +367,9 @@ class Bot:
         time.sleep(1)
         if uw_world.is_admin():
             # uw_admin.set_map_selection("planets/tetrahedron.uwmap")
-            uw_admin.set_map_selection("planets/disk.uwmap")
+            uw_admin.set_map_selection("planets/capsule.uwmap")
             # uw_admin.set_map_selection("special/risk.uwmap")
-            uw_admin.add_ai()
+            # uw_admin.add_ai()
             uw_admin.set_automatic_suggested_camera_focus(True)
         uw_game.log_info("configuration done")
 
